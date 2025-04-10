@@ -6,13 +6,19 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        rust: ["nightly-2023-12-28"]
+
+    runs-on: ${{ matrix.os }}
     steps:
-      #- name: setup sanlock
-      #  run: sudo apt-get update && sudo apt-get install sanlock/*backports
-
-      #- name: sanlock help
-      #  run: sanlock --help
-
-      - name: do nothing
-        run: echo do nothing
+    - name: install Rust with retry
+      uses: nick-fields/retry@v3
+      env:
+        TOOLCHAIN: ${{ matrix.rust }}
+      with:
+        command: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain ${TOOLCHAIN} --component rustfmt --component clippy --profile minimal
+        max_attempts: 3
+        timeout_minutes: 10
